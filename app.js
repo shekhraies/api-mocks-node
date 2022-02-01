@@ -16,7 +16,7 @@ router.route("/*").all(function (req, res) {
 });
 
 // make our http server listen to connections
-server.listen(8080);
+server.listen(3000);
 
 // Methods
 function getResponse(req, res) {
