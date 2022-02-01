@@ -11,6 +11,17 @@ var server = http.createServer(function onRequest(req, res) {
 });
 
 // register a route and add all methods
+router.route("/").all(function (req, res) {
+  res.setHeader("Content-Type", "application/json");
+  res.end(
+    JSON.stringify({
+      message: "Demo mocks api",
+      apis: ["/v1/users", "/v1/cities"],
+    })
+  );
+});
+
+// register a route and add all methods
 router.route("/*").all(function (req, res) {
   getResponse(req, res);
 });
