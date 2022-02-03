@@ -4,32 +4,61 @@ var Router = require("router");
 
 const _ = require("lodash");
 
-// create the router and server
+/**
+ * create the router and server
+ */
 var router = new Router();
 var server = http.createServer(function onRequest(req, res) {
   router(req, res, finalhandler(req, res));
 });
 
-// register a route and add all methods
+/**
+ * Root route handler
+ */
 router.route("/").all(function (req, res) {
-  res.setHeader("Content-Type", "application/json");
-  res.end(
-    JSON.stringify({
-      message: "Demo mocks api",
-      apis: ["/v1/users", "/v1/cities"],
-    })
-  );
+  const testFolder = "./mocks/";
+  const fs = require("fs");
+
+  let apis = [];
+  fs.readdir(testFolder, (err, files) => {
+    if (err) {
+      printError(res, "Invalid file path.");
+    } else {
+      files.forEach((file) => {
+        apis.push("/v1/" + _.replace(file, ".json", ""));
+      });
+
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          message: "Demo mocks api",
+          apis: apis,
+          code: 1,
+        })
+      );
+    }
+  });
 });
 
-// register a route and add all methods
+/**
+ * Api route handler
+ */
 router.route("/*").all(function (req, res) {
   getResponse(req, res);
 });
 
-// make our http server listen to connections
+/**
+ * make our http server listen to connections
+ */
 server.listen(3000);
 
-// Methods
+/**
+ *
+ * @description : Get Response as JSON
+ *
+ * @param {*} req
+ * @param {*} res
+ */
 function getResponse(req, res) {
   try {
     let routeArr = req.url.split("/");
@@ -44,28 +73,37 @@ function getResponse(req, res) {
         if (_.startsWith(req.url, _.get(data, "request.path", ""))) {
           if (searchString) {
             let result = body.find((t) => t.id == searchString);
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify(result));
+            if (result) {
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify(result));
+            } else {
+              printError(res, "Record not found!");
+            }
           } else {
-            // this is GET /pet/:id
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify(body));
           }
         } else {
-          printMessage(req, res, "Invalid url!");
+          printError(res, "Invalid url!");
         }
       } else {
-        printMessage(req, res, "Invalid method!");
+        printError(res, "Invalid method!");
       }
     } else {
-      printMessage(req, res, "Invalid file request!");
+      printError(res, "Invalid file request!");
     }
   } catch (error) {
-    printMessage(req, res, "Invalid request!");
+    printError(res, "Invalid request!");
   }
 }
 
-function printMessage(req, res, message) {
+/**
+ * @description : Print error output in json
+ *
+ * @param {*} res
+ * @param {*} errorMessage
+ */
+function printError(res, errorMessage) {
   res.setHeader("Content-Type", "application/json");
-  res.end(JSON.stringify({ message: message }));
+  res.end(JSON.stringify({ message: errorMessage, code: 2 }));
 }
